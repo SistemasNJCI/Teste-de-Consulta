@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerador de OS - Manutenção e Taxa</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --secondary: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --text-main: #1f2937;
+            --text-muted: #6b7280;
+            --border-color: rgba(0, 0, 0, 0.1);
+            --glass-bg: rgba(255, 255, 255, 0.85); 
+        }
+
+        body { 
+            margin: 0; 
+            font-family: 'Inter', sans-serif; 
+            background: transparent; /* Fundo transparente conforme solicitado */
+            color: var(--text-main);
+        }
+
+        /* NAVEGAÇÃO */
+        .nav-interface {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            padding: 20px;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .btn-nav {
+            padding: 10px 22px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(8px);
+            cursor: pointer;
+            font-weight: 500;
+            color: var(--text-muted);
+            transition: all 0.2s ease;
+        }
+
+        .btn-nav.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+        }
+
+        .content-section { display: none; padding: 10px 20px 40px 20px; }
+        .content-section.active { display: block; }
+
+        /* CONTAINERS E CARDS */
+        .container_ui { max-width: 850px; margin: auto; }
+
+        .section-card { 
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            padding: 24px; 
+            border-radius: 16px; 
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            margin-bottom: 24px; 
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        h2 { text-align: center; font-weight: 700; margin-bottom: 30px; }
+        h3 { font-size: 1rem; font-weight: 600; color: var(--primary); margin-bottom: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; }
+
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+        .full-width { grid-column: span 2; }
+
+        label { font-weight: 500; font-size: 0.82rem; margin-bottom: 6px; display: block; }
+
+        input, select, textarea { 
+            width: 100%; 
+            padding: 11px; 
+            border-radius: 8px; 
+            border: 1px solid var(--border-color); 
+            background-color: rgba(255, 255, 255, 0.6); 
+            font-family: 'Inter', sans-serif;
+            font-size: 0.9rem;
+            box-sizing: border-box;
+        }
+
+        input:focus, select:focus, textarea:focus { 
+            outline: none; 
+            border-color: var(--primary); 
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        /* BOTÕES */
+        .btn-group { display: flex; gap: 10px; margin-top: 20px; }
+        .action-btn { 
+            padding: 14px; border: none; border-radius: 10px; font-weight: 600; cursor: pointer; flex: 1; transition: 0.2s;
+        }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-secondary { background: var(--secondary); color: white; }
+        .btn-muted { background: #6b7280; color: white; }
+
+        /* OUTPUTS */
+        .output-card { 
+            background: #1e293b; color: #f8fafc; padding: 25px; border-radius: 14px; margin-top: 25px; 
+            font-family: 'Consolas', monospace; border-left: 6px solid var(--secondary); white-space: pre-line;
+        }
+        .grupo-info { background: #fff9c4; padding: 20px; border-radius: 12px; border-left: 6px solid var(--warning); margin-top: 25px; color: #333; }
+
+        .erro-campo { border: 2px solid var(--danger) !important; background-color: #fff5f5 !important; }
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+
+<nav class="nav-interface">
+    <button class="btn-nav active" onclick="switchTab(this, 'abaPadrao')">Gerador de OS</button>
+    <button class="btn-nav" onclick="switchTab(this, 'abaTaxa')">Gerador de OS de Taxa</button>
+</nav>
+
+<div id="abaPadrao" class="content-section active">
+    <div class="container_ui">
+        <h2>Gerador de OS</h2>
+        <div id="mensagemErro_v1" class="hidden" style="background: var(--danger); color: white; padding: 15px; border-radius: 8px; margin-bottom: 20px; font-weight: bold; text-align: center;">⚠️ Existem campos obrigatórios (*) não preenchidos!</div>
+
+        <div class="section-card">
+            <h3>📋 Identificação</h3>
+            <div class="grid">
+                <div class="full-width">
+                    <label>CPF/CNPJ do titular</label>
+                    <div style="display:flex; gap:10px; align-items:stretch;">
+                        <input type="text" id="cpfCnpj_v1" placeholder="Digite o CPF ou CNPJ" autocomplete="off" style="flex:1;">
+                        <button type="button" class="btn-primary" id="btnBuscarCliente_v1" onclick="buscarCliente_v1()" style="min-width:150px;">🔎 Buscar cliente</button>
+                    </div>
+                    <small id="statusCliente_v1" style="display:block; margin-top:8px; font-weight:600;"></small>
+                </div>
+                <div class="full-width"><label>Nome completo do titular *</label><input type="text" id="nomeTitular_v1" placeholder="João da Silva"></div>
+                <div><label>Nº Contrato *</label><input type="text" id="numeroContrato_v1" placeholder="000000"></div>
+                <div><label>Nº Protocolo *</label><input type="text" id="protocolo_v1" placeholder="202400123"></div>
+                <div class="full-width"><label>Bairro (com Cidade) *</label><input type="text" id="bairroCidade_v1" placeholder="Centro - Jacareí"></div>
+                <div class="full-width">
+                    <label>Canal de Atendimento</label>
+                    <select id="canal_v1"><option>Telefone</option><option>Fortics</option></select>
+                </div>
+            </div>
+        </div>
+
+        <div class="section-card">
+            <h3>🕒 Dados do Agendamento</h3>
+            <div class="grid">
+                <div><label>Período *</label><select id="periodo_v1"><option value="">Selecione</option><option>COMERCIAL</option><option>MANHÃ</option><option>TARDE</option></select></div>
+                <div><label>Adiantamento? *</label><select id="adiantamento_v1"><option value="">Selecione</option><option>Disponível</option><option>Não disponível</option></select></div>
+                <div class="full-width"><label>Especificar Disponibilidade (Opcional)</label><input type="text" id="obsAdiantamento_v1" placeholder="Ex: Cliente aceita a partir das 10h ou cliente só pode receber após as 15h00 se adiantar no dia 05/05 mas no dia 06/05 não consegue receber."></div>
+                <div class="full-width">
+                    <label>Cliente mencionou cancelamento? *</label>
+                    <select id="cancelamento_v1" onchange="projeto1.toggleCancelamento()"><option value="Não">Não</option><option value="Sim">Sim</option></select>
+                </div>
+            </div>
+            <div id="infoCancelamento_v1" class="hidden" style="margin-top:15px; background: #fff5f5; padding: 15px; border-radius: 8px;"><label style="color: var(--danger);">Descrever motivo do cancelamento *</label><textarea id="descCancelamento_v1" rows="2"></textarea></div>
+        </div>
+
+        <div class="section-card">
+            <h3>🏢 Restrições</h3>
+            <div class="grid">
+                <div><label>É condomínio? *</label><select id="condominio_v1" onchange="projeto1.toggleCondominio()"><option value="Não">Não</option><option value="Sim">Sim</option></select></div>
+                <div><label>Restrição de horário? *</label><select id="restricaoCliente_v1" onchange="projeto1.toggleRestricaoCliente()"><option value="Não">Não</option><option value="Sim">Sim</option></select></div>
+                <label class="full-width" style="font-size: 0.75rem; color: var(--text-muted);">Não agendamos horário marcado. Pedidos específicos devem ser escritos manualmente.</label>
+            </div>
+            <div id="infoCondominio_v1" class="hidden grid" style="margin-top:15px; background:#f0f7ff; padding:15px; border-radius:8px;">
+                <div><label>Nome do Condomínio *</label><input type="text" id="nomeCondominio_v1"></div>
+                <div><label>Restrição do Condomínio *</label><input type="text" id="restricaoCondominio_v1"></div>
+            </div>
+            <div id="infoRestricaoCliente_v1" class="hidden" style="margin-top:15px;"><label>Qual restrição do cliente? *</label><input type="text" id="qualRestricaoCliente_v1"></div>
+        </div>
+
+        <div class="section-card">
+            <h3>🛠️ Atendimento Técnico</h3>
+            <div class="grid">
+                <div><label>Nome de quem falou (Cliente) *</label><input type="text" id="cliente_v1"></div>
+                <div><label>Número de Contato *</label><input type="text" id="numero_v1"></div>
+                <div class="full-width"><label>Solicitação / Dificuldade *</label><textarea id="dificuldade_v1" rows="2" placeholder="O que o cliente relatou?"></textarea></div>
+                <div class="full-width"><label>Suporte Realizado *</label><textarea id="suporte_v1" rows="3" placeholder="Quais Foram os procedimentos feitos (antes e depois)?"></textarea></div>
+                <div class="full-width"><label>Retorno/Feedback do cliente *</label><textarea id="retorno_v1" rows="2" placeholder="Dificuldade persistiu?/Normalizou ?"></textarea></div>
+                <div class="full-width"><label>OS em Garantia?</label><select id="garantia_v1"><option value="">Selecione</option><option value="Sim">Sim</option><option value="NÃO">NÃO</option></select></div>
+            </div>
+        </div>
+
+        <div class="section-card">
+            <h3>📡 Diagnóstico de Rede</h3>
+            <label>Monitoramento Atual *</label><textarea id="monitoramento_v1" rows="2" placeholder="Link Depura (Uptime e dBm) ou não Depura"></textarea>
+            <div class="grid" style="margin-top:15px;">
+                <div><label>Link depurou? *</label><select id="depurou_v1" onchange="projeto1.toggleLink()"><option value="">Selecione</option><option value="Sim">Sim</option><option value="Não">Não</option></select></div>
+                <div id="linkInfo_v1" class="hidden"><label>Porta e Caixa *</label><input type="text" id="porta_v1"></div>
+            </div>
+            <div id="ledsDiv_v1" class="hidden" style="margin-top:15px;"><label>Leds do equipamento *</label><textarea id="leds_v1" rows="2"></textarea></div>
+        </div>
+
+        <div class="btn-group">
+            <button class="action-btn btn-primary" onclick="projeto1.gerar()">✨ Gerar OS</button>
+            <button class="action-btn btn-secondary" id="btnCopiarOS_v1" onclick="projeto1.copiarTexto('resultado_v1', 'btnCopiarOS_v1')">📋 Copiar OS</button>
+            <button class="action-btn btn-muted" onclick="projeto1.resetarFormulario()">🗑️ Limpar</button>
+        </div>
+
+        <div class="output-card hidden" id="resultadoCard_v1">
+            <div id="resultado_v1"></div>
+        </div>
+
+        <div class="grupo-info hidden" id="grupoInfo_v1">
+            <div id="dadosGrupo_v1" style="white-space: pre-line;"></div>
+            <button class="action-btn btn-secondary" id="btnCopiarGrupo_v1" onclick="projeto1.copiarTexto('dadosGrupo_v1', 'btnCopiarGrupo_v1')" style="margin-top:15px; width: 100%;">📋 Copiar para Grupo</button>
+        </div>
+    </div>
+</div>
+
+<div id="abaTaxa" class="content-section">
+    <div class="container_ui">
+        <h2>Gerador de OS com Taxa</h2>
+        <div id="mensagemErro_v2" class="hidden" style="background: var(--danger); color: white; padding: 15px; border-radius: 8px; margin-bottom: 20px; font-weight: bold; text-align: center;">⚠️ Existem campos obrigatórios (*) não preenchidos!</div>
+
+        <div class="section-card">
+            <h3>📅 Agendamento & Local</h3>
+            <div class="grid">
+                <div><label>Período *</label><select id="periodo_v2"><option value="">Selecione</option><option>COMERCIAL</option><option>MANHÃ</option><option>TARDE</option></select></div>
+                <div><label>Adiantamento? *</label><select id="adiantamento_v2"><option value="">Selecione</option><option>Disponível</option><option>Não disponível</option></select></div>
+                <div><label>É condomínio? *</label><select id="condominio_v2" onchange="projeto2.toggleCondominio()"><option value="Não">Não</option><option value="Sim">Sim</option></select></div>
+                <div><label>Restrição de horário? *</label><select id="restricaoCliente_v2" onchange="projeto2.toggleRestricaoCliente()"><option value="Não">Não</option><option value="Sim">Sim</option></select></div>
+            </div>
+            <div id="infoCondominio_v2" class="hidden grid" style="margin-top:10px; background: rgba(0,0,0,0.03); padding: 15px; border-radius: 8px;">
+                <div><label>Nome do Condomínio *</label><input type="text" id="nomeCondominio_v2" placeholder="Ex: Ed. Solar"></div>
+                <div><label>Horário do Condomínio *</label><input type="text" id="restricaoCondominio_v2" placeholder="Ex: 08h às 17h"></div>
+            </div>
+            <div id="infoRestricaoCliente_v2" class="hidden" style="margin-top:10px;"><label>Qual a restrição? *</label><input type="text" id="qualRestricaoCliente_v2"></div>
+        </div>
+
+        <div class="section-card">
+            <h3>👤 Atendimento e Taxas</h3>
+            <div class="grid">
+                <div class="full-width"><label>Nome do Cliente *</label><input type="text" id="cliente_v2"></div>
+                <div><label>Canal *</label><select id="canal_v2"><option>Telefone</option><option>Fortics</option></select></div>
+                <div><label>Contato *</label><input type="text" id="numero_v2" placeholder="(00) 00000-0000"></div>
+                <div class="full-width">
+                    <label>Forma de cobrança *</label>
+                    <select id="forma_v2" onchange="projeto2.mostrarTaxa()">
+                        <option value="">Selecione</option>
+                        <option value="parcelado">Ponto Extra (Parcelado)</option>
+                        <option value="avista">Taxas à Vista </option>
+                        <option value="isencao">Isenção de Taxas</option>
+                        <option value="adm">Dano no Equipamento (Administrativo)</option>
+                        <option value="wifi">Wi-Fi Extra / NJBOX</option>
+                    </select>
+                </div>
+            </div>
+            <div id="boxParcelado_v2" class="hidden" style="margin-top:15px;"><label>Opções de Parcelamento *</label><select id="parceladoValor_v2"><option value="">Selecione</option><option>Ponto Extra - Taxa de R$80,00 Parcelado em 2x</option><option>Ponto Extra - Taxa de R$80,00 parcelado em 4x (Exceção N2)</option></select></div>
+            <div id="boxVista_v2" class="hidden" style="margin-top:15px;"><label>Opções à Vista / Mensal *</label><select id="vistaValor_v2"><option value="">Selecione</option><option>Mudança de Cômodo no valor de R$49,90 à vista.</option><option>Dano no cordão de fibra, ciente do valor de R$49,90 à vista.</option><option>Dano no DROP, ciente do valor de R$49,90 à vista.</option><option>Reinstalação no valor de R$49,90 à vista.</option><option>Ponto Extra no valor de R$80,00 à vista.</option></select></div>
+            <div id="boxisencao_v2" class="hidden" style="margin-top:15px;"><label>Motivo da Isenção *</label><select id="isencaotaxa_v2"><option value="">Selecione</option><option>Dano no Cordão de Fibra da PTO, taxa isenta por ser o primeiro dano</option><option>Dano no Drop isento por insatisfação (Autorizado pelo N2)</option><option>Taxa Isenta no Cordão de Fibra devido a Insatisfação (Autorizada pelo N2)</option><option>Taxa de Mudança de Cômodo isenta devido a insatisfação (Autorizada pelo N2)</option><option>Taxa de Reinstalação isenta devido a insatisfação (Autorizada pelo N2)</option><option>Taxa de Ponto Extra isenta devido a insatisfação (Autorizada pelo N2)</option></select></div>
+            <div id="boxequipamento_v2" class="hidden" style="margin-top:15px;"><label>Tipo de Dano Administrativo *</label><select id="danosaoequipamento_v2"><option value="">Selecione</option><option>Dano no Modem (ONU), ciente que setor administrativo entrará em contato</option><option>Dano no Roteador, ciente que setor administrativo entrará em contato</option><option>Dano no Wi-Fi Extra, ciente que setor administrativo entrará em contato</option><option>Dano na Fonte é isento.</option> <option> Demais danos: Informar no Comentário adicional o dano e a Taxa ou motivo de isenção</option></option></select></div>
+            <div id="boxwifiextra_V2" class="hidden" style="margin-top:15px;"><label>Wi-Fi Extra *</label><select id="wifiextra_v2"><option value="">Selecione</option><option>1 Equipamento de Wi-Fi Extra no valor de R$9,90 mensal</option><option>2 Equipamentos de Wi-Fi Extra no valor de R$14,90 mensal</option><option>3 Equipamentos de Wi-Fi Extra no valor de R$19,90 mensal</option> <option>Wi-Fi Extra Plus (incluso no plano)</option><option>NJBox no valor de R$29,90/mensal</option> <option>NJBox gratuito devido a incompatibilidade na TV e mencionar cancelamento (Isento pelo N2 devido ao relacionamento estar fora de expediente)</option></select></div>
+        </div>
+        <div class="section-card">
+            <h3>🔧 Detalhes Técnicos</h3>
+            <div class="grid">
+                <div class="full-width"><label>Monitoramento Atual *</label><textarea id="monitoramento_v2" rows="2" placeholder="Link Depura desde X, dBm ou Link não"></textarea></div>
+                <div><label>Teve Suporte? *</label><select id="teveDificuldade_v2" onchange="projeto2.mostrarDificuldade()"><option value="Não">Não</option><option value="Sim">Sim</option></select></div>
+                <div><label>Link depurou? *</label><select id="depurou_v2" onchange="projeto2.mostrarLink()"><option value="Sim">Sim</option><option value="Não">Não</option></select></div>
+            </div>
+            <div id="boxDificuldade_v2" class="hidden" style="margin-top:15px;">
+                <label>Relato da Dificuldade *</label><textarea id="dificuldade_v2"></textarea>
+                <label>Suporte realizado *</label><textarea id="suporte_v2"></textarea>
+                <label>Retorno do cliente *</label><textarea id="retorno_v2" rows="1"></textarea>
+            </div>
+            <div id="boxLink_v2" class="hidden" style="margin-top:15px;">
+                <label>Porta e Caixa *</label><input type="text" id="porta_v2">
+                <label>Leds *</label><textarea id="leds_v2" rows="2"></textarea>
+            </div>
+            <div style="margin-top:15px;"><label>Comentário Adicional (Opcional)</label><input type="text" id="comentarioadicional_v2"></div>
+        </div>
+        <div class="btn-group">
+            <button class="action-btn btn-primary" onclick="projeto2.gerarTexto()">✨ Gerar Texto</button>
+            <button class="action-btn btn-secondary" id="btnCopiar_v2" onclick="projeto2.copiarTexto()">📋 Copiar</button>
+            <button class="action-btn btn-muted" onclick="projeto2.resetarForm()">🗑️ Limpar</button>
+        </div>
+        <div class="output-card" id="resultado_v2">O texto gerado aparecerá aqui...</div>
+    </div>
+</div>
+
+<script>
+// FUNÇÃO NAVEGAÇÃO
+function switchTab(btn, tabId) {
+    document.querySelectorAll('.btn-nav').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById(tabId).classList.add('active');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// CONFIGURAÇÃO DA CONSULTA DE CLIENTE
+// O frontend NÃO deve receber o token do Voalle.
+// O endereço abaixo deve apontar para o seu backend/Worker, que consulta o Voalle com o token guardado em Secret.
+const API_CLIENTE_URL = "/api/cliente";
+
+function normalizarDocumento_v1(valor) {
+    return String(valor || "").replace(/\D/g, "");
+}
+
+function formatarDocumento_v1(valor) {
+    const doc = normalizarDocumento_v1(valor);
+    if (doc.length <= 11) {
+        return doc
+            .replace(/(\d{3})(\d)/, "$1.$2")
+            .replace(/(\d{3})(\d)/, "$1.$2")
+            .replace(/(\d{3})(\d{1,2})$/, "$1-$2");
+    }
+    return doc
+        .replace(/(\d{2})(\d)/, "$1.$2")
+        .replace(/(\d{3})(\d)/, "$1.$2")
+        .replace(/(\d{3})(\d)/, "$1/$2")
+        .replace(/(\d{4})(\d{1,2})$/, "$1-$2");
+}
+
+function definirStatusCliente_v1(texto, tipo = "") {
+    const el = document.getElementById("statusCliente_v1");
+    el.textContent = texto;
+    el.style.color = tipo === "erro" ? "#b91c1c" : tipo === "sucesso" ? "#15803d" : "#475569";
+}
+
+async function buscarCliente_v1() {
+    const campo = document.getElementById("cpfCnpj_v1");
+    const botao = document.getElementById("btnBuscarCliente_v1");
+    const documento = normalizarDocumento_v1(campo.value);
+
+    if (documento.length !== 11 && documento.length !== 14) {
+        definirStatusCliente_v1("Informe um CPF (11 dígitos) ou CNPJ (14 dígitos).", "erro");
+        campo.focus();
+        return;
+    }
+
+    botao.disabled = true;
+    botao.textContent = "⏳ Consultando...";
+    definirStatusCliente_v1("Consultando cadastro do cliente...");
+
+    try {
+        const separador = API_CLIENTE_URL.includes("?") ? "&" : "?";
+        const resposta = await fetch(`${API_CLIENTE_URL}${separador}documento=${encodeURIComponent(documento)}`, {
+            method: "GET",
+            headers: { "Accept": "application/json" }
+        });
+
+        let dados = null;
+        try { dados = await resposta.json(); } catch (_) {}
+
+        if (!resposta.ok) {
+            throw new Error(dados?.message || dados?.messages || "Não foi possível consultar o cliente.");
+        }
+
+        // Aceita tanto o retorno normalizado pelo backend quanto o retorno original do Voalle.
+        const cliente = dados?.cliente || dados?.response;
+        if (!cliente || dados?.success === false) {
+            throw new Error(dados?.message || dados?.messages || "Cliente não localizado.");
+        }
+
+        const nome = String(cliente.name || "").trim();
+        const bairro = String(cliente.mainAddress?.neighborhood || "").trim();
+        const cidade = String(cliente.mainAddress?.city || "").trim();
+
+        if (!nome) {
+            throw new Error("O cadastro foi localizado, mas não possui nome do titular.");
+        }
+
+        document.getElementById("nomeTitular_v1").value = nome;
+        document.getElementById("bairroCidade_v1").value = bairro && cidade ? `${bairro} - ${cidade}` : (bairro || cidade);
+        campo.value = formatarDocumento_v1(documento);
+
+        definirStatusCliente_v1(
+            bairro || cidade ? "✅ Cliente localizado e dados preenchidos." : "✅ Cliente localizado. O cadastro não possui bairro/cidade informado.",
+            "sucesso"
+        );
+    } catch (erro) {
+        console.error("Erro ao consultar cliente:", erro);
+        definirStatusCliente_v1(erro.message || "Erro ao consultar o cliente.", "erro");
+    } finally {
+        botao.disabled = false;
+        botao.textContent = "🔎 Buscar cliente";
+    }
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+    const campo = document.getElementById("cpfCnpj_v1");
+    if (!campo) return;
+    campo.addEventListener("input", () => {
+        const posicao = campo.selectionStart;
+        const valorAnterior = campo.value;
+        campo.value = formatarDocumento_v1(campo.value);
+        if (campo.value !== valorAnterior) {
+            const delta = campo.value.length - valorAnterior.length;
+            campo.setSelectionRange(Math.max(0, posicao + delta), Math.max(0, posicao + delta));
+        }
+    });
+    campo.addEventListener("keydown", event => {
+        if (event.key === "Enter") {
+            event.preventDefault();
+            buscarCliente_v1();
+        }
+    });
+});
+
+// PROJETO 1: LÓGICA ORIGINAL PRESERVADA
+const projeto1 = {
+    $: id => document.getElementById(id),
+    toggleCondominio() { this.$('infoCondominio_v1').classList.toggle("hidden", this.$('condominio_v1').value !== "Sim"); },
+    toggleRestricaoCliente() { this.$('infoRestricaoCliente_v1').classList.toggle("hidden", this.$('restricaoCliente_v1').value !== "Sim"); },
+    toggleCancelamento() { this.$('infoCancelamento_v1').classList.toggle("hidden", this.$('cancelamento_v1').value !== "Sim"); },
+    toggleLink() {
+        const depurouNao = this.$('depurou_v1').value === "Não";
+        this.$('linkInfo_v1').classList.toggle("hidden", !depurouNao);
+        this.$('ledsDiv_v1').classList.toggle("hidden", !depurouNao);
+    },
+    resetarFormulario() {
+        const campos = document.querySelectorAll('#abaPadrao input, #abaPadrao select, #abaPadrao textarea');
+        campos.forEach(campo => {
+            campo.value = ""; campo.classList.remove('erro-campo');
+            if (campo.tagName === 'SELECT') campo.selectedIndex = 0;
+        });
+        this.$('mensagemErro_v1').classList.add('hidden');
+        this.$('resultadoCard_v1').classList.add('hidden');
+        this.$('grupoInfo_v1').classList.add('hidden');
+    },
+    gerar() {
+        const todosCampos = document.querySelectorAll('#abaPadrao input, #abaPadrao select, #abaPadrao textarea');
+        todosCampos.forEach(c => c.classList.remove('erro-campo'));
+        this.$('mensagemErro_v1').classList.add('hidden');
+
+        let obrigatorios = ["nomeTitular_v1", "numeroContrato_v1", "protocolo_v1", "bairroCidade_v1", "periodo_v1", "adiantamento_v1", "cliente_v1", "numero_v1", "dificuldade_v1", "suporte_v1", "retorno_v1", "monitoramento_v1", "depurou_v1"];
+        if (this.$('cancelamento_v1').value === "Sim") obrigatorios.push("descCancelamento_v1");
+        if (this.$('condominio_v1').value === "Sim") obrigatorios.push("nomeCondominio_v1", "restricaoCondominio_v1");
+        if (this.$('restricaoCliente_v1').value === "Sim") obrigatorios.push("qualRestricaoCliente_v1");
+        if (this.$('depurou_v1').value === "Não") obrigatorios.push("porta_v1", "leds_v1");
+
+        let camposVazios = [];
+        obrigatorios.forEach(id => {
+            let el = this.$(id);
+            if (!el.value.trim()) { el.classList.add('erro-campo'); camposVazios.push(el); }
+        });
+
+        if (camposVazios.length > 0) {
+            this.$('mensagemErro_v1').classList.remove('hidden');
+            camposVazios[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
+            return;
+        }
+
+        let textoOS = `📌 DADOS DE AGENDAMENTO\nPeríodo: ${this.$('periodo_v1').value}\nAdiantamento: ${this.$('adiantamento_v1').value}\n`;
+        if(this.$('obsAdiantamento_v1').value) textoOS += `Restrição de Horario: ${this.$('obsAdiantamento_v1').value}\n`;
+        if(this.$('cancelamento_v1').value === "Sim") textoOS += `⚠️ CANCELAMENTO: ${this.$('descCancelamento_v1').value}\n`;
+        if(this.$('condominio_v1').value === "Sim") textoOS += `🏢 Condomínio: ${this.$('nomeCondominio_v1').value} – ${this.$('restricaoCondominio_v1').value}\n`;
+        if(this.$('restricaoCliente_v1').value === "Sim") textoOS += `🚫 Restrição Cliente: ${this.$('qualRestricaoCliente_v1').value}\n`;
+        textoOS += `\n👤 ATENDIMENTO\n${this.$('cliente_v1').value} via ${this.$('canal_v1').value} (${this.$('numero_v1').value})\nRelato: ${this.$('dificuldade_v1').value}\nProcedimento: ${this.$('suporte_v1').value}\nFeedback: ${this.$('retorno_v1').value}\n\n📊 MONITORAMENTO\n${this.$('monitoramento_v1').value}\n`;
+        if (this.$('garantia_v1').value !== "") { textoOS += `⚠️ Garantia: ${this.$('garantia_v1').value}\n`; }
+        if (this.$('depurou_v1').value === "Não") { textoOS += `Porta/Caixa: ${this.$('porta_v1').value}\nLeds: ${this.$('leds_v1').value}\n`; }
+
+        this.$('resultado_v1').innerText = textoOS;
+        this.$('resultadoCard_v1').classList.remove("hidden");
+
+        let textoGrupo = `*DADOS PARA ENCAMINHAMENTO*\n*Titular:* ${this.$('nomeTitular_v1').value}\n*Contrato:* ${this.$('numeroContrato_v1').value}\n*Protocolo:* ${this.$('protocolo_v1').value}\n*Bairro/Cidade:* ${this.$('bairroCidade_v1').value}\n*Solicitação:* ${this.$('dificuldade_v1').value}\n`;
+        if (this.$('garantia_v1').value !== "") { textoGrupo += `*Garantia:* ${this.$('garantia_v1').value}\n`; }
+        if (this.$('depurou_v1').value === "Não") { textoGrupo += `*Leds:* ${this.$('leds_v1').value}\n*Porta/Caixa:* ${this.$('porta_v1').value}`; } 
+        else { textoGrupo += `*Sinal:* Link Depura (Online)`; }
+
+        this.$('dadosGrupo_v1').innerText = textoGrupo;
+        this.$('grupoInfo_v1').classList.remove("hidden");
+    },
+ copiarTexto(btnCopiarOS_v1, btnCopiarGrupo_v1) { 
+    navigator.clipboard.writeText(this.$(btnCopiarOS_v1, btnCopiarGrupo_v1).innerText).then(() => { 
+        const b = this.$(btnCopiarOS_v1, btnCopiarGrupo_v1); 
+        const t = b.innerText; b.innerText = "✅ Copiado!"; 
+        setTimeout(() => { b.innerText = t; }, 2000); 
+        }); 
+    } 
+};
+
+// PROJETO 2: LÓGICA ORIGINAL PRESERVADA
+const projeto2 = {
+    $: id => document.getElementById(id),
+    toggleCondominio() { this.$("infoCondominio_v2").classList.toggle("hidden", this.$("condominio_v2").value !== "Sim"); },
+    toggleRestricaoCliente() { this.$("infoRestricaoCliente_v2").classList.toggle("hidden", this.$("restricaoCliente_v2").value !== "Sim"); },
+    mostrarDificuldade() { this.$("boxDificuldade_v2").classList.toggle("hidden", this.$("teveDificuldade_v2").value !== "Sim"); },
+    mostrarLink() { this.$("boxLink_v2").classList.toggle("hidden", this.$("depurou_v2").value !== "Não"); },
+    mostrarTaxa() {
+        const forma = this.$("forma_v2").value;
+        ["boxParcelado_v2", "boxVista_v2", "boxisencao_v2", "boxequipamento_v2", "boxwifiextra_V2"].forEach(id => this.$(id).classList.add("hidden"));
+        if(forma === "parcelado") this.$("boxParcelado_v2").classList.remove("hidden");
+        if(forma === "avista") this.$("boxVista_v2").classList.remove("hidden");
+        if(forma === "isencao") this.$("boxisencao_v2").classList.remove("hidden");
+        if(forma === "adm") this.$("boxequipamento_v2").classList.remove("hidden");
+        if(forma === "wifi") this.$("boxwifiextra_V2").classList.remove("hidden");
+    },
+    resetarForm() {
+        const campos = document.querySelectorAll('#abaTaxa input, #abaTaxa select, #abaTaxa textarea');
+        campos.forEach(c => { if(c.tagName === 'SELECT') c.selectedIndex = 0; else c.value = ""; c.classList.remove('erro-campo'); });
+        this.$("mensagemErro_v2").classList.add('hidden');
+        this.$("resultado_v2").innerText = "O texto gerado aparecerá aqui...";
+        this.mostrarTaxa(); this.mostrarDificuldade(); this.mostrarLink(); this.toggleCondominio(); this.toggleRestricaoCliente();
+    },
+    gerarTexto() {
+        const todosCampos = document.querySelectorAll('#abaTaxa input, #abaTaxa select, #abaTaxa textarea');
+        todosCampos.forEach(c => c.classList.remove('erro-campo'));
+        this.$("mensagemErro_v2").classList.add('hidden');
+
+        let obrigatorios = ["periodo_v2", "adiantamento_v2", "cliente_v2", "numero_v2", "forma_v2", "monitoramento_v2", "depurou_v2"];
+        if(this.$("condominio_v2").value === "Sim") obrigatorios.push("nomeCondominio_v2", "restricaoCondominio_v2");
+        if(this.$("restricaoCliente_v2").value === "Sim") obrigatorios.push("qualRestricaoCliente_v2");
+        if(this.$("forma_v2").value === "parcelado") obrigatorios.push("parceladoValor_v2");
+        if(this.$("forma_v2").value === "avista") obrigatorios.push("vistaValor_v2");
+        if(this.$("forma_v2").value === "isencao") obrigatorios.push("isencaotaxa_v2");
+        if(this.$("forma_v2").value === "adm") obrigatorios.push("danosaoequipamento_v2");
+        if(this.$("forma_v2").value === "wifi") obrigatorios.push("wifiextra_v2");
+        if(this.$("teveDificuldade_v2").value === "Sim") obrigatorios.push("dificuldade_v2", "suporte_v2", "retorno_v2");
+        if(this.$("depurou_v2").value === "Não") obrigatorios.push("porta_v2", "leds_v2");
+
+        let erros = [];
+        obrigatorios.forEach(id => {
+            if(!this.$(id).value.trim()) { this.$(id).classList.add('erro-campo'); erros.push(this.$(id)); }
+        });
+
+        if(erros.length > 0) {
+            this.$("mensagemErro_v2").classList.remove('hidden');
+            erros[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
+            return;
+        }
+
+        let texto = `📌 AGENDAMENTO\nPeríodo: ${this.$("periodo_v2").value}\nAdiantamento: ${this.$("adiantamento_v2").value}\n`;
+        if (this.$("condominio_v2").value === "Sim") texto += `Restrição: Condomínio ${this.$("nomeCondominio_v2").value} – ${this.$("restricaoCondominio_v2").value}\n`;
+        if (this.$("restricaoCliente_v2").value === "Sim") texto += `Restrição Cliente: ${this.$("qualRestricaoCliente_v2").value}\n`;
+        texto += `\n👤 ATENDIMENTO\n${this.$("cliente_v2").value} (${this.$("canal_v2").value}) - Contato: ${this.$("numero_v2").value}\n`;
+        
+        const f = this.$("forma_v2").value;
+        if(f === "parcelado") texto += `Serviço/Danificação e Taxa: ${this.$("parceladoValor_v2").value}\n`;
+        if(f === "avista") texto += `Taxa: ${this.$("vistaValor_v2").value}\n`;
+        if(f === "isencao") texto += `Taxa: ISENTA (${this.$("isencaotaxa_v2").value})\n`;
+        if(f === "adm") texto += `Taxa: Administrativa (${this.$("danosaoequipamento_v2").value})\n`;
+        if(f === "wifi") texto += `Solicitação: (${this.$("wifiextra_v2").value})\n`;
+
+        if(this.$("teveDificuldade_v2").value === "Sim"){
+            texto += `\n🔧 DIFICULDADE/SUPORTE\nRelato: ${this.$("dificuldade_v2").value}\nSuporte: ${this.$("suporte_v2").value}\nFeedback: ${this.$("retorno_v2").value}\n`;
+        }
+        if(this.$("comentarioadicional_v2").value) texto += `Obs: ${this.$("comentarioadicional_v2").value}\n`;
+        texto += `\n📊 MONITORAMENTO\n${this.$("monitoramento_v2").value}\n`;
+        if(this.$("depurou_v2").value === "Não") texto += `\nPorta/Caixa: ${this.$("porta_v2").value}\nLeds: ${this.$("leds_v2").value}\n`;
+
+        this.$("resultado_v2").innerText = texto;
+    },
+    copiarTexto() {
+        navigator.clipboard.writeText(this.$("resultado_v2").innerText).then(() => {
+            const b = this.$("btnCopiar_v2"); const t = b.innerText;
+            b.innerText = "✅ Copiado!";
+            setTimeout(() => { b.innerText = t; }, 2000);
+        });
+    }
+};
+</script>
+</body>
+</html>
